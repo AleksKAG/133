@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -27,6 +28,10 @@ func (h *Handler) HandleTaskList(w http.ResponseWriter, r *http.Request) {
 	if queryLimit != "" {
 		if parsedLimit, err := strconv.Atoi(queryLimit); err == nil && parsedLimit > 0 {
 			limit = parsedLimit
+		} else {
+			log.Printf("[ОШИБКА] Неверный параметр 'limit': %s", queryLimit)
+			writeError(w, "Неверный параметр 'limit'")
+			return
 		}
 	}
 
@@ -36,6 +41,7 @@ func (h *Handler) HandleTaskList(w http.ResponseWriter, r *http.Request) {
 		limit,
 	)
 	if err != nil {
+		log.Printf("[ОШИБКА] Не удалось выполнить запрос к базе данных: %v", err)
 		writeError(w, "Failed to retrieve tasks")
 		return
 	}
@@ -48,6 +54,7 @@ func (h *Handler) HandleTaskList(w http.ResponseWriter, r *http.Request) {
 		var id int64 // SQLite возвращает id в виде INTEGER
 		err := rows.Scan(&id, &task.Date, &task.Title, &task.Comment, &task.Repeat)
 		if err != nil {
+			log.Printf("[ОШИБКА] Не удалось разобрать задачу: %v", err)
 			writeError(w, "Failed to parse tasks")
 			return
 		}
@@ -58,6 +65,7 @@ func (h *Handler) HandleTaskList(w http.ResponseWriter, r *http.Request) {
 
 	// Обрабатываем ошибку после завершения итерации
 	if err := rows.Err(); err != nil {
+		log.Printf("[ОШИБКА] Ошибка при итерации по строкам: %v", err)
 		writeError(w, "Error iterating over rows")
 		return
 	}
@@ -70,6 +78,7 @@ func (h *Handler) HandleTaskList(w http.ResponseWriter, r *http.Request) {
 	// Формируем и отправляем JSON-ответ
 	response := TaskListResponse{Tasks: tasks}
 	if err := json.NewEncoder(w).Encode(response); err != nil {
+		log.Printf("[ОШИБКА] Не удалось закодировать задачи в JSON: %v", err)
 		writeError(w, "Failed to encode tasks")
 	}
 }
