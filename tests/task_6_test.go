@@ -92,7 +92,7 @@ func TestEditTask(t *testing.T) {
 		if ok {
 			errVal = fmt.Sprint(e)
 		}
-		assert.NotEqual(t, len(errVal), 0, "Ожидается ошибка для значения %v", v)
+		assert.NotEqual(t, len(errVal), nil, "Ожидается ошибка для значения %v", v)
 	}
 
 	updateTask := func(newVals map[string]any) {
